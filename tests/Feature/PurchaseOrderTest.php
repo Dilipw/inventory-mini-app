@@ -19,6 +19,7 @@ class PurchaseOrderTest extends TestCase
     protected User $staff;
     protected Product $product;
     protected Supplier $supplier;
+    protected Product $secondProduct;
 
     protected function setUp(): void
     {
@@ -47,6 +48,15 @@ class PurchaseOrderTest extends TestCase
             'minimum_stock' => 5,
             'purchase_price' => 500,
             'selling_price' => 750,
+        ]);
+
+        $this->secondProduct = Product::factory()->create([
+            'category_id' => $category->id,
+            'supplier_id' => $this->supplier->id,
+            'stock_quantity' => 30,
+            'minimum_stock' => 5,
+            'purchase_price' => 800,
+            'selling_price' => 1000,
         ]);
     }
 
@@ -464,5 +474,68 @@ class PurchaseOrderTest extends TestCase
             ->assertJson([
                 'message' => 'Resource not found.',
             ]);
+    }
+
+    public function test_purchase_order_completion_updates_multiple_products(): void
+    {
+        Sanctum::actingAs($this->manager);
+
+        $createResponse = $this->postJson('/api/purchase-orders', [
+            'supplier_id' => $this->supplier->id,
+            'purchase_date' => now()->toDateString(),
+            'items' => [
+                [
+                    'product_id' => $this->product->id,
+                    'quantity' => 10,
+                    'price' => 500,
+                ],
+                [
+                    'product_id' => $this->secondProduct->id,
+                    'quantity' => 15,
+                    'price' => 800,
+                ],
+            ],
+        ]);
+
+        $orderId = $createResponse->json('data.id');
+
+        $createResponse->assertJsonPath(
+            'data.total_amount',
+            '17000.00'
+        );
+
+        $response = $this->postJson(
+            "/api/purchase-orders/{$orderId}/complete"
+        );
+
+        $response
+            ->assertStatus(200)
+            ->assertJsonPath('data.status', 'completed');
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'stock_quantity' => 30,
+        ]);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->secondProduct->id,
+            'stock_quantity' => 45,
+        ]);
+
+        $this->assertDatabaseHas('stock_histories', [
+            'product_id' => $this->product->id,
+            'quantity' => 10,
+            'type' => 'IN',
+            'remarks' => "Purchase Order #{$orderId}",
+            'created_by' => $this->manager->id,
+        ]);
+
+        $this->assertDatabaseHas('stock_histories', [
+            'product_id' => $this->secondProduct->id,
+            'quantity' => 15,
+            'type' => 'IN',
+            'remarks' => "Purchase Order #{$orderId}",
+            'created_by' => $this->manager->id,
+        ]);
     }
 }
