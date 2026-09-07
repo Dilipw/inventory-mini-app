@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\SupplierController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -25,5 +26,20 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('role:admin');
 
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
+        ->middleware('role:admin');
+
+    Route::get('/suppliers', [SupplierController::class, 'index'])
+        ->middleware('role:admin,manager,staff');
+
+    Route::get('/suppliers/{supplier}', [SupplierController::class, 'show'])
+        ->middleware('role:admin,manager,staff');
+
+    Route::post('/suppliers', [SupplierController::class, 'store'])
+        ->middleware('role:admin');
+
+    Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])
+        ->middleware('role:admin');
+
+    Route::delete('/suppliers/{supplier}', [SupplierController::class, 'destroy'])
         ->middleware('role:admin');
 });
