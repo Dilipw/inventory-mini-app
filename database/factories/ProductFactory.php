@@ -17,8 +17,8 @@ class ProductFactory extends Factory
         return [
             'product_name' => fake()->words(3, true),
             'sku' => 'SKU-' . fake()->unique()->numerify('#####'),
-            'category_id' => Category::factory(),
-            'supplier_id' => Supplier::factory(),
+            'category_id' => Category::query()->inRandomOrder()->value('id'),
+            'supplier_id' => Supplier::query()->inRandomOrder()->value('id'),
             'purchase_price' => fake()->randomFloat(2, 100, 5000),
             'selling_price' => fake()->randomFloat(2, 150, 7000),
             'stock_quantity' => fake()->numberBetween(0, 100),
