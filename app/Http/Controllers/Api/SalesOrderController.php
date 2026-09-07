@@ -32,7 +32,8 @@ class SalesOrderController extends Controller
 
         $sortDirection = $filters['sort_direction'] ?? 'desc';
 
-        $query->orderBy('created_at', $sortDirection);
+        $query->orderBy('created_at', $sortDirection)
+    ->orderBy('id', $sortDirection);
 
         $perPage = $filters['per_page'] ?? 15;
 
