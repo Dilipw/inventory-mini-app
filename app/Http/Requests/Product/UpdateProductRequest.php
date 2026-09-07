@@ -26,7 +26,6 @@ class UpdateProductRequest extends FormRequest
             'supplier_id' => ['sometimes', 'integer', 'exists:suppliers,id'],
             'purchase_price' => ['sometimes', 'numeric', 'min:0'],
             'selling_price' => ['sometimes', 'numeric', 'min:0'],
-            'stock_quantity' => ['sometimes', 'integer', 'min:0'],
             'minimum_stock' => ['sometimes', 'integer', 'min:0'],
             'description' => ['sometimes', 'nullable', 'string'],
             'status' => ['sometimes', 'boolean'],
