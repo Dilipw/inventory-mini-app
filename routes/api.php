@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\StockController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\StockHistoryController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -65,4 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/stock/reduce', [StockController::class, 'reduce'])
         ->middleware('role:admin,manager');
+
+    Route::get('/stock/history', [StockHistoryController::class, 'index'])
+        ->middleware('role:admin,manager,staff');
 });
