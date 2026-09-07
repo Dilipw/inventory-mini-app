@@ -97,4 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::put('/sales-orders/{salesOrder}', [SalesOrderController::class, 'update'])
         ->middleware('role:admin,manager');
+
+    Route::post('/sales-orders/{salesOrder}/complete', [SalesOrderController::class, 'complete'])
+        ->middleware('role:admin,manager');
 });
