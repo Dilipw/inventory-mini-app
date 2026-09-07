@@ -76,4 +76,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])
         ->middleware('role:admin,manager');
+
+    Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])
+        ->middleware('role:admin,manager,staff');
+
+    Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])
+        ->middleware('role:admin,manager,staff');
 });
