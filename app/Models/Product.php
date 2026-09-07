@@ -26,6 +26,17 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
+    protected function casts(): array
+    {
+        return [
+            'purchase_price' => 'decimal:2',
+            'selling_price' => 'decimal:2',
+            'stock_quantity' => 'integer',
+            'minimum_stock' => 'integer',
+            'status' => 'boolean',
+        ];
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
