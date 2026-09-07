@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Purchase\StorePurchaseOrderRequest;
 use App\Http\Resources\PurchaseOrderResource;
 use App\Services\PurchaseService;
+use App\Services\StockService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class PurchaseOrderController extends Controller
 {
@@ -24,5 +26,23 @@ class PurchaseOrderController extends Controller
             'message' => 'Purchase order created successfully.',
             'data' => new PurchaseOrderResource($purchaseOrder),
         ], 201);
+    }
+
+    public function complete(
+        int $purchaseOrder,
+        PurchaseService $purchaseService,
+        StockService $stockService,
+        Request $request
+    ): JsonResponse {
+        $purchaseOrder = $purchaseService->completeOrder(
+            $purchaseOrder,
+            $request->user()->id,
+            $stockService
+        );
+
+        return response()->json([
+            'message' => 'Purchase order completed successfully.',
+            'data' => new PurchaseOrderResource($purchaseOrder),
+        ]);
     }
 }

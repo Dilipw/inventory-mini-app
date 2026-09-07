@@ -70,4 +70,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/stock/history', [StockHistoryController::class, 'index'])
         ->middleware('role:admin,manager,staff');
+
+    Route::post('/purchase-orders', [PurchaseOrderController::class, 'store'])
+        ->middleware('role:admin,manager');
+
+    Route::post('/purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])
+        ->middleware('role:admin,manager');
 });

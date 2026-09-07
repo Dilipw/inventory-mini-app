@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use App\Exceptions\InsufficientStockException;
+use App\Exceptions\PurchaseAlreadyCompletedException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -25,6 +26,15 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (
             InsufficientStockException $exception,
+            Request $request
+        ) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        });
+
+        $exceptions->render(function (
+            PurchaseAlreadyCompletedException $exception,
             Request $request
         ) {
             return response()->json([
