@@ -14,6 +14,13 @@ class Category extends Model
     /** @use HasFactory<CategoryFactory> */
     use HasFactory;
 
+    protected function casts(): array
+    {
+        return [
+            'status' => 'boolean',
+        ];
+    }
+
     public function products(): HasMany
     {
         return $this->hasMany(Product::class);
