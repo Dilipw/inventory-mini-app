@@ -88,4 +88,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/sales-orders', [SalesOrderController::class, 'store'])
         ->middleware('role:admin,manager');
+
+    Route::get('/sales-orders', [SalesOrderController::class, 'index'])
+        ->middleware('role:admin,manager,staff');
+
+    Route::get('/sales-orders/{salesOrder}', [SalesOrderController::class, 'show'])
+        ->middleware('role:admin,manager,staff');
 });
