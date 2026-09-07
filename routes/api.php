@@ -94,4 +94,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/sales-orders/{salesOrder}', [SalesOrderController::class, 'show'])
         ->middleware('role:admin,manager,staff');
+
+    Route::put('/sales-orders/{salesOrder}', [SalesOrderController::class, 'update'])
+        ->middleware('role:admin,manager');
 });

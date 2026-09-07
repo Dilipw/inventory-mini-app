@@ -10,6 +10,9 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Sales\IndexSalesOrderRequest;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use App\Models\SalesOrder;
+use App\Http\Requests\Sales\UpdateSalesOrderRequest;
+use Illuminate\Http\Request;
+
 
 class SalesOrderController extends Controller
 {
@@ -49,7 +52,7 @@ class SalesOrderController extends Controller
             'data' => new SalesOrderResource($salesOrder),
         ]);
     }
-    
+
     public function store(
         StoreSalesOrderRequest $request,
         SalesService $salesService
@@ -64,5 +67,40 @@ class SalesOrderController extends Controller
             'message' => 'Sales order created successfully.',
             'data' => new SalesOrderResource($salesOrder),
         ], 201);
+    }
+
+    public function update(
+        UpdateSalesOrderRequest $request,
+        SalesOrder $salesOrder,
+        SalesService $salesService
+    ): JsonResponse {
+        $salesOrder = $salesService->updateOrder(
+            $salesOrder,
+            $request->input('customer_name'),
+            $request->input('order_date'),
+            $request->input('items')
+        );
+
+        return response()->json([
+            'message' => 'Sales order updated successfully.',
+            'data' => new SalesOrderResource($salesOrder),
+        ]);
+    }
+
+
+    public function complete(
+        Request $request,
+        SalesOrder $salesOrder,
+        SalesService $salesService
+    ): JsonResponse {
+        $salesOrder = $salesService->completeOrder(
+            $salesOrder,
+            $request->user()->id
+        );
+
+        return response()->json([
+            'message' => 'Sales order completed successfully.',
+            'data' => new SalesOrderResource($salesOrder),
+        ]);
     }
 }
