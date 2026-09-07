@@ -1,11 +1,11 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,7 +27,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Registration successful.',
             'data' => [
-                'user' => $user,
+                'user' => new UserResource($user),
                 'token' => $token,
             ],
         ], 201);
@@ -35,7 +35,9 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = User::where('email', $request->email)->first();
+        $user = User::query()
+            ->where('email', $request->email)
+            ->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -48,7 +50,7 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Login successful.',
             'data' => [
-                'user' => $user,
+                'user' => new UserResource($user),
                 'token' => $token,
             ],
         ]);
@@ -67,7 +69,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'message' => 'Profile fetched successfully.',
-            'data' => $request->user(),
+            'data' => new UserResource($request->user()),
         ]);
     }
 
