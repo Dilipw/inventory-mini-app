@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\StockHistoryController;
 use App\Http\Controllers\Api\PurchaseOrderController;
+use App\Http\Controllers\Api\SalesOrderController;
+
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -82,4 +84,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])
         ->middleware('role:admin,manager,staff');
+
+
+    Route::post('/sales-orders', [SalesOrderController::class, 'store'])
+        ->middleware('role:admin,manager');
 });
