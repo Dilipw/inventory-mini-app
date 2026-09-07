@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\StockController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\ProductController;
@@ -58,4 +59,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])
         ->middleware('role:admin');
+
+    Route::post('/stock/add', [StockController::class, 'add'])
+        ->middleware('role:admin,manager');
+
+    Route::post('/stock/reduce', [StockController::class, 'reduce'])
+        ->middleware('role:admin,manager');
 });
