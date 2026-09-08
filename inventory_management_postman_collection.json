@@ -1050,7 +1050,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 20,\n  \"remarks\": \"Initial stock\"\n}"
+              "raw": "{\n  \"product_id\": {{product_id}},\n  \"quantity\": 20,\n  \"remarks\": \"Initial stock\"\n}"
             }
           },
           "event": [
@@ -1104,7 +1104,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 5,\n  \"remarks\": \"Manual stock reduction\"\n}"
+              "raw": "{\n  \"product_id\": {{product_id}},\n  \"quantity\": 5,\n  \"remarks\": \"Manual stock reduction\"\n}"
             }
           },
           "event": [
@@ -1337,7 +1337,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"supplier_id\": 1,\n  \"purchase_date\": \"2026-09-08\",\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"quantity\": 25,\n      \"price\": 22\n    }\n  ]\n}"
+              "raw": "{\n  \"supplier_id\": {{supplier_id}},\n  \"purchase_date\": \"2026-09-08\",\n  \"items\": [\n    {\n      \"product_id\": {{product_id}},\n      \"quantity\": 25,\n      \"price\": 22\n    }\n  ]\n}"
             },
             "event": [
               {
@@ -1555,7 +1555,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customer_name\": \"Rahul Patil\",\n  \"order_date\": \"2026-09-08\",\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"quantity\": 2,\n      \"price\": 28\n    }\n  ]\n}"
+              "raw": "{\n  \"customer_name\": \"Rahul Patil\",\n  \"order_date\": \"2026-09-08\",\n  \"items\": [\n    {\n      \"product_id\": {{product_id}},\n      \"quantity\": 2,\n      \"price\": 28\n    }\n  ]\n}"
             },
             "event": [
               {
@@ -1615,7 +1615,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customer_name\": \"Rahul Patil Updated\",\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"quantity\": 3,\n      \"price\": 28\n    }\n  ]\n}"
+              "raw": "{\n  \"customer_name\": \"Rahul Patil Updated\",\n  \"items\": [\n    {\n      \"product_id\": {{product_id}},\n      \"quantity\": 3,\n      \"price\": 28\n    }\n  ]\n}"
             }
           },
           "event": [
