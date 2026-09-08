@@ -754,12 +754,30 @@ Folders:
 
 In short: just run Login once, and then the rest of the collection can be run in order without any manual setup.
 
+### Running the Collection in Bulk (Collection Runner)
+
+The folders are ordered so that running them top to bottom works correctly, with one important exception: three requests in the **Authentication** folder change or remove the active token, and will break the rest of a bulk run if left in.
+
+Before doing a bulk run:
+
+1. Run **Login** on its own first (not as part of the bulk run), using the Admin demo credentials. This stores the token automatically.
+2. In the Collection Runner, **deselect** these three requests from the bulk run:
+   - `Register` — not required for the demo flow; the seeded Admin/Manager/Staff users already exist.
+   - `Change Password` — this revokes the current Sanctum token, so anything run after it will start failing with `401`.
+   - `Logout` — this also invalidates the token, so it should only ever be run last, on its own.
+3. Bulk-run the remaining folders in order: **Categories → Suppliers → Products → Stock → Purchase Orders → Sales Orders**.
+4. If you want to demonstrate Register, Change Password, or Logout as well, run each of them individually at the end — and run Login again afterward if you need a fresh token for further testing.
+
 # Recommended Demo Flow
 
 For a quick project demonstration:
 
 ```text
 Login
+  ↓
+Create Category (optional — seeded categories already exist)
+  ↓
+Create Supplier (optional — seeded suppliers already exist)
   ↓
 Create Product
   ↓
