@@ -129,7 +129,7 @@ http://127.0.0.1:8000/api
 
 These credentials are for local/demo use only.
 
-> **Note on self-registration:** Users who sign up through `POST /api/register` are assigned the `staff` role by default. Admin and Manager accounts are created only through the seeder or by an existing Admin — a new user cannot make themselves Admin or Manager through the public registration API.
+> **Note on self-registration:** Users who sign up through `POST /api/register` are assigned the `staff` role by default. Admin and Manager accounts are created through the database seeder. A new user cannot make themselves Admin or Manager through the public registration API.
 
 # API Documentation
 
@@ -207,12 +207,12 @@ Changing the password revokes existing Sanctum tokens. Please login again after 
 | Role | Access |
 |---|---|
 | Admin | Full access to every module |
-| Manager | Full access to stock operations and purchase/sales order workflows (create, view, update, complete). Category, Supplier and Product master data can only be created, updated or deleted by Admin. |
+| Manager | Full access to stock operations, product management (create/update), and purchase/sales order workflows (create, view, update, complete). Category and Supplier master data, and product deletion, are restricted to Admin. |
 | Staff | Read-only access to all modules |
 
 Authorization is handled using custom role middleware, applied per route.
 
-**Why master data is Admin-only:** Category, Supplier and Product records are the master data that everything else in the system depends on (stock, purchase orders and sales orders all reference them). Keeping their creation, editing and deletion restricted to Admin protects the reliability of this master data, while Manager retains full ability to run day-to-day operations — adding stock, and creating and completing purchase/sales orders — without needing Admin involvement for every transaction.
+**Why Category and Supplier stay Admin-only:** Category and Supplier records define the structural setup of the catalog and vendor base — they change rarely and affect the system broadly, so keeping their creation, editing and deletion Admin-only avoids accidental structural changes. Product records, on the other hand, are day-to-day operational data — new items, price updates, stock threshold changes — that Managers need to create and update directly as part of running daily inventory operations, without depending on Admin for every change. Product deletion is still kept Admin-only since it is a destructive, irreversible action.
 
 A quick summary of what each role can actually do, module by module:
 
@@ -223,7 +223,8 @@ A quick summary of what each role can actually do, module by module:
 | Suppliers (view) | ✅ | ✅ | ✅ |
 | Suppliers (create/update/delete) | ✅ | ❌ | ❌ |
 | Products (view) | ✅ | ✅ | ✅ |
-| Products (create/update/delete) | ✅ | ❌ | ❌ |
+| Products (create/update) | ✅ | ✅ | ❌ |
+| Products (delete) | ✅ | ❌ | ❌ |
 | Stock (add/reduce) | ✅ | ✅ | ❌ |
 | Stock history (view) | ✅ | ✅ | ✅ |
 | Purchase Orders (create/complete) | ✅ | ✅ | ❌ |
@@ -287,8 +288,8 @@ POST /api/suppliers
 |---|---|---|
 | GET | `/api/products` | Admin, Manager, Staff |
 | GET | `/api/products/{product}` | Admin, Manager, Staff |
-| POST | `/api/products` | Admin |
-| PUT | `/api/products/{product}` | Admin |
+| POST | `/api/products` | Admin, Manager |
+| PUT | `/api/products/{product}` | Admin, Manager |
 | DELETE | `/api/products/{product}` | Admin |
 
 ### Create
@@ -582,8 +583,8 @@ These endpoints do not change any of the required business rules — they only m
 | 401 | Authentication required/invalid |
 | 403 | Authenticated but not allowed to perform this action |
 | 404 | Resource not found |
-| 409 | Business conflict — either an invalid order state (e.g. completing an already-completed order) or a delete blocked by dependent records |
-| 422 | Validation or business-rule error |
+| 409 | Business conflict — such as a completed sales order being modified/completed again, or a delete blocked by dependent records |
+| 422 | Validation or business-rule error, including insufficient stock or an already-completed purchase order |
 
 Example forbidden response:
 
@@ -639,7 +640,7 @@ Examples include:
 
 ## Stock
 
-Stock is stored as an unsigned integer, so it can never be a negative number at the database level.
+Stock is stored as an integer quantity, and the application enforces that stock can never become negative through validation and transactional stock operations.
 
 Stock-changing operations use database transactions and row locking to protect stock from invalid concurrent updates — for example, two sales completing for the same product at the same time.
 
@@ -707,10 +708,12 @@ Current verification:
 
 ```text
 96 tests passed
-431 assertions passed
+437 assertions passed
 ```
 
 The tests cover authentication, RBAC, product operations and filters, stock operations, purchase workflows, sales workflows, validation, insufficient stock handling, unauthorized access, and not-found cases.
+
+
 
 # Postman
 

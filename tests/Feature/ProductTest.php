@@ -103,7 +103,7 @@ class ProductTest extends TestCase
         ]);
     }
 
-    public function test_manager_cannot_create_product(): void
+    public function test_manager_can_create_product(): void
     {
         Sanctum::actingAs($this->manager);
 
@@ -114,15 +114,17 @@ class ProductTest extends TestCase
             'supplier_id' => $this->supplier->id,
             'purchase_price' => 100,
             'selling_price' => 150,
+            'stock_quantity' => 0,
+            'minimum_stock' => 5,
         ]);
 
         $response
-            ->assertStatus(403)
-            ->assertJson([
-                'message' => 'You do not have permission to perform this action.',
-            ]);
+            ->assertStatus(201)
+            ->assertJsonPath('message', 'Product created successfully.')
+            ->assertJsonPath('data.product_name', 'Manager Product')
+            ->assertJsonPath('data.sku', 'MANAGER-001');
 
-        $this->assertDatabaseMissing('products', [
+        $this->assertDatabaseHas('products', [
             'sku' => 'MANAGER-001',
         ]);
     }
@@ -562,7 +564,7 @@ class ProductTest extends TestCase
 
         $prices = collect($response->json('data'))
             ->pluck('selling_price')
-            ->map(fn ($price) => (float) $price)
+            ->map(fn($price) => (float) $price)
             ->values()
             ->all();
 
@@ -600,24 +602,33 @@ class ProductTest extends TestCase
         ]);
     }
 
-    public function test_manager_cannot_update_product(): void
+    public function test_manager_can_update_product(): void
     {
         Sanctum::actingAs($this->manager);
 
         $response = $this->putJson(
             "/api/products/{$this->product->id}",
             [
-                'product_name' => 'Manager Update',
+                'product_name' => 'Manager Updated Product',
+                'selling_price' => 200,
+                'minimum_stock' => 10,
             ]
         );
 
         $response
-            ->assertStatus(403)
-            ->assertJson([
-                'message' => 'You do not have permission to perform this action.',
-            ]);
-    }
+            ->assertStatus(200)
+            ->assertJsonPath('message', 'Product updated successfully.')
+            ->assertJsonPath('data.product_name', 'Manager Updated Product')
+            ->assertJsonPath('data.selling_price', '200.00')
+            ->assertJsonPath('data.minimum_stock', 10);
 
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'product_name' => 'Manager Updated Product',
+            'selling_price' => 200,
+            'minimum_stock' => 10,
+        ]);
+    }
     public function test_staff_cannot_update_product(): void
     {
         Sanctum::actingAs($this->staff);

@@ -56,10 +56,10 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('role:admin,manager,staff');
 
     Route::post('/products', [ProductController::class, 'store'])
-        ->middleware('role:admin');
+        ->middleware('role:admin,manager');
 
     Route::put('/products/{product}', [ProductController::class, 'update'])
-        ->middleware('role:admin');
+        ->middleware('role:admin,manager');
 
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])
         ->middleware('role:admin');
