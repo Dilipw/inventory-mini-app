@@ -2,7 +2,7 @@
   "info": {
     "name": "Inventory Management System API",
     "_postman_id": "8d7d5b6f-5e5c-4b42-9c31-1b8f4d7e2a11",
-    "description": "REST API collection for the Laravel Inventory Management System. Login automatically stores the Sanctum token, and create requests automatically store resource IDs for easier API testing.",
+    "description": "REST API collection for the Laravel Inventory Management System. Login automatically stores the Sanctum token, and create requests automatically store resource IDs for easier API testing. Recommended flow: Login → Categories → Suppliers → Products → Stock → Purchase Orders → Sales Orders. Run Cleanup only after the demo flow.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -450,52 +450,6 @@
               }
             }
           ]
-        },
-        {
-          "name": "Delete Category",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/categories/{{category_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "categories",
-                "{{category_id}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Category deleted\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
-                ]
-              }
-            }
-          ]
         }
       ]
     },
@@ -705,52 +659,6 @@
               }
             }
           ]
-        },
-        {
-          "name": "Delete Supplier",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/suppliers/{{supplier_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "suppliers",
-                "{{supplier_id}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Supplier deleted\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
-                ]
-              }
-            }
-          ]
         }
       ]
     },
@@ -885,7 +793,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"product_name\": \"Test Rice 5kg\",\n  \"sku\": \"GRC-RICE-TEST-001\",\n  \"category_id\": 1,\n  \"supplier_id\": 1,\n  \"purchase_price\": 250,\n  \"selling_price\": 290,\n  \"stock_quantity\": 0,\n  \"minimum_stock\": 10,\n  \"description\": \"Test rice product\",\n  \"status\": true\n}"
+              "raw": "{\n  \"product_name\": \"Test Rice 5kg\",\n  \"sku\": \"GRC-RICE-TEST-001\",\n  \"category_id\": {{category_id}},\n  \"supplier_id\": {{supplier_id}},\n  \"purchase_price\": 250,\n  \"selling_price\": 290,\n  \"stock_quantity\": 0,\n  \"minimum_stock\": 10,\n  \"description\": \"Test rice product\",\n  \"status\": true\n}"
             },
             "event": [
               {
@@ -955,52 +863,6 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Product updated\", function () {",
-                  "    pm.response.to.have.status(200);",
-                  "});"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Delete Product",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/products/{{product_id}}",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "products",
-                "{{product_id}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Product deleted\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});"
                 ]
@@ -1673,6 +1535,150 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Sales order completed\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08. Cleanup",
+      "description": "Optional destructive cleanup. Run after the complete demo flow. Delete Product first, then Supplier, then Category.",
+      "item": [
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/products/{{product_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{product_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Product deleted\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Supplier",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/suppliers/{{supplier_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "suppliers",
+                "{{supplier_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Supplier deleted\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/categories/{{category_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "categories",
+                "{{category_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Category deleted\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});"
                 ]
