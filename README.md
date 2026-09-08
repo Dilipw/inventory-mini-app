@@ -25,14 +25,8 @@ This backend assignment focuses on clean API design, authentication, role-based 
 - Sanctum bearer-token authentication
 
 ### Role-Based Access Control
-
-| Role | Access |
-|---|---|
-| Admin | Full access |
-| Manager | Manage inventory and orders |
-| Staff | Read-only access |
-
-Authorization is handled using custom role middleware.
+- Admin, Manager and Staff roles
+- Custom role middleware for authorization
 
 ### Inventory
 - Category CRUD
@@ -135,6 +129,8 @@ http://127.0.0.1:8000/api
 
 These credentials are for local/demo use only.
 
+> **Note on self-registration:** Users who sign up through `POST /api/register` are assigned the `staff` role by default. Admin and Manager accounts are created only through the seeder or by an existing Admin — a new user cannot make themselves Admin or Manager through the public registration API.
+
 # API Documentation
 
 All protected endpoints require:
@@ -160,6 +156,8 @@ POST /api/register
     "password_confirmation": "Password@123"
 }
 ```
+
+A newly registered user is given the `staff` role by default.
 
 ### Login
 
@@ -202,12 +200,43 @@ PUT /api/change-password
 }
 ```
 
+Changing the password revokes existing Sanctum tokens. Please login again after this to get a fresh token.
+
+## Role-Based Access Control
+
+| Role | Access |
+|---|---|
+| Admin | Full access to every module |
+| Manager | Full access to stock operations and purchase/sales order workflows (create, view, update, complete). Category, Supplier and Product master data can only be created, updated or deleted by Admin. |
+| Staff | Read-only access to all modules |
+
+Authorization is handled using custom role middleware, applied per route.
+
+**Why master data is Admin-only:** Category, Supplier and Product records are the master data that everything else in the system depends on (stock, purchase orders and sales orders all reference them). Keeping their creation, editing and deletion restricted to Admin protects the reliability of this master data, while Manager retains full ability to run day-to-day operations — adding stock, and creating and completing purchase/sales orders — without needing Admin involvement for every transaction.
+
+A quick summary of what each role can actually do, module by module:
+
+| Module | Admin | Manager | Staff |
+|---|---|---|---|
+| Categories (view) | ✅ | ✅ | ✅ |
+| Categories (create/update/delete) | ✅ | ❌ | ❌ |
+| Suppliers (view) | ✅ | ✅ | ✅ |
+| Suppliers (create/update/delete) | ✅ | ❌ | ❌ |
+| Products (view) | ✅ | ✅ | ✅ |
+| Products (create/update/delete) | ✅ | ❌ | ❌ |
+| Stock (add/reduce) | ✅ | ✅ | ❌ |
+| Stock history (view) | ✅ | ✅ | ✅ |
+| Purchase Orders (create/complete) | ✅ | ✅ | ❌ |
+| Purchase Orders (view) | ✅ | ✅ | ✅ |
+| Sales Orders (create/update/complete) | ✅ | ✅ | ❌ |
+| Sales Orders (view) | ✅ | ✅ | ✅ |
+
 ## 2. Categories
 
 | Method | Endpoint | Access |
 |---|---|---|
-| GET | `/api/categories` | All authenticated roles |
-| GET | `/api/categories/{category}` | All authenticated roles |
+| GET | `/api/categories` | Admin, Manager, Staff |
+| GET | `/api/categories/{category}` | Admin, Manager, Staff |
 | POST | `/api/categories` | Admin |
 | PUT | `/api/categories/{category}` | Admin |
 | DELETE | `/api/categories/{category}` | Admin |
@@ -230,8 +259,8 @@ POST /api/categories
 
 | Method | Endpoint | Access |
 |---|---|---|
-| GET | `/api/suppliers` | All authenticated roles |
-| GET | `/api/suppliers/{supplier}` | All authenticated roles |
+| GET | `/api/suppliers` | Admin, Manager, Staff |
+| GET | `/api/suppliers/{supplier}` | Admin, Manager, Staff |
 | POST | `/api/suppliers` | Admin |
 | PUT | `/api/suppliers/{supplier}` | Admin |
 | DELETE | `/api/suppliers/{supplier}` | Admin |
@@ -256,8 +285,8 @@ POST /api/suppliers
 
 | Method | Endpoint | Access |
 |---|---|---|
-| GET | `/api/products` | All authenticated roles |
-| GET | `/api/products/{product}` | All authenticated roles |
+| GET | `/api/products` | Admin, Manager, Staff |
+| GET | `/api/products/{product}` | Admin, Manager, Staff |
 | POST | `/api/products` | Admin |
 | PUT | `/api/products/{product}` | Admin |
 | DELETE | `/api/products/{product}` | Admin |
@@ -327,17 +356,17 @@ Sorting and pagination:
 GET /api/products?sort_by=selling_price&sort_direction=asc&per_page=10
 ```
 
-The API uses an allowlist for sorting fields.
+The API uses an allowlist for sorting fields, so only approved column names can be used for `sort_by`.
 
-> Product stock is not changed through normal product update. Stock is managed through stock operations and purchase/sales completion.
+> **Note:** Product stock is not changed through the normal product update API. Stock is managed only through the Stock module (`/api/stock/add`, `/api/stock/reduce`) and through purchase/sales order completion. This keeps every stock change auditable through stock history.
 
 ## 5. Stock
 
 | Method | Endpoint | Access |
 |---|---|---|
-| POST | `/api/stock/add` | Admin / Manager |
-| POST | `/api/stock/reduce` | Admin / Manager |
-| GET | `/api/stock/history` | All authenticated roles |
+| POST | `/api/stock/add` | Admin, Manager |
+| POST | `/api/stock/reduce` | Admin, Manager |
+| GET | `/api/stock/history` | Admin, Manager, Staff |
 
 ### Add Stock
 
@@ -382,14 +411,25 @@ GET /api/stock/history?product_id=1
 GET /api/stock/history?type=IN
 ```
 
+### Stock History Fields
+
+Each stock movement record stores:
+
+- `product_id` — the product that was affected
+- `quantity` — the quantity moved
+- `type` — either `IN` or `OUT`
+- `remarks` — an optional note explaining the movement
+- `created_by` — the ID of the user who performed the operation
+- `created_at` — the time the movement happened
+
 ## 6. Purchase Orders
 
 | Method | Endpoint | Access |
 |---|---|---|
-| POST | `/api/purchase-orders` | Admin / Manager |
-| GET | `/api/purchase-orders` | All authenticated roles |
-| GET | `/api/purchase-orders/{purchaseOrder}` | All authenticated roles |
-| POST | `/api/purchase-orders/{purchaseOrder}/complete` | Admin / Manager |
+| POST | `/api/purchase-orders` | Admin, Manager |
+| GET | `/api/purchase-orders` | Admin, Manager, Staff |
+| GET | `/api/purchase-orders/{purchaseOrder}` | Admin, Manager, Staff |
+| POST | `/api/purchase-orders/{purchaseOrder}/complete` | Admin, Manager |
 
 ### Create
 
@@ -416,7 +456,7 @@ POST /api/purchase-orders
 }
 ```
 
-Total amount is calculated from `quantity × price`.
+> **Total Amount:** `total_amount` is always calculated on the server from the order items, as `quantity × price` summed across all items. The client should not send `total_amount` in the request — even if it is sent, the server value is what gets saved, so the amount always matches the actual items on the order.
 
 ### Complete
 
@@ -425,20 +465,20 @@ POST /api/purchase-orders/{purchaseOrder}/complete
 ```
 
 On completion:
-1. Product stock increases.
-2. `IN` stock history is created.
-3. Order status becomes `completed`.
-4. The same order cannot be completed again.
+1. Product stock increases by the ordered quantity, for each item.
+2. An `IN` stock history record is created for each item.
+3. Order status changes from `pending` to `completed`.
+4. The same order cannot be completed again — trying to complete an already-completed order is rejected.
 
 ## 7. Sales Orders
 
 | Method | Endpoint | Access |
 |---|---|---|
-| POST | `/api/sales-orders` | Admin / Manager |
-| GET | `/api/sales-orders` | All authenticated roles |
-| GET | `/api/sales-orders/{salesOrder}` | All authenticated roles |
-| PUT | `/api/sales-orders/{salesOrder}` | Admin / Manager |
-| POST | `/api/sales-orders/{salesOrder}/complete` | Admin / Manager |
+| POST | `/api/sales-orders` | Admin, Manager |
+| GET | `/api/sales-orders` | Admin, Manager, Staff |
+| GET | `/api/sales-orders/{salesOrder}` | Admin, Manager, Staff |
+| PUT | `/api/sales-orders/{salesOrder}` | Admin, Manager |
+| POST | `/api/sales-orders/{salesOrder}/complete` | Admin, Manager |
 
 ### Create
 
@@ -460,6 +500,8 @@ POST /api/sales-orders
 }
 ```
 
+> **Total Amount:** just like Purchase Orders, `total_amount` for a Sales Order is calculated on the server from `quantity × price` across all items. It is never taken directly from client input.
+
 ### Update Pending Order
 
 ```http
@@ -479,7 +521,7 @@ PUT /api/sales-orders/{salesOrder}
 }
 ```
 
-Only pending sales orders can be updated.
+Only a sales order that is still `pending` can be updated. Once an order is `completed`, it becomes locked and cannot be edited.
 
 ### Complete
 
@@ -488,13 +530,48 @@ POST /api/sales-orders/{salesOrder}/complete
 ```
 
 On completion:
-1. Required stock is checked.
-2. Product rows are locked during the stock operation.
-3. Stock decreases.
-4. `OUT` stock history is created.
-5. Order status becomes `completed`.
+1. Available stock is checked against the requested quantity, for every item.
+2. Product rows are locked during the stock check and update, to avoid problems from concurrent requests.
+3. Stock decreases by the sold quantity, for each item.
+4. An `OUT` stock history record is created for each item.
+5. Order status changes from `pending` to `completed`.
 
-If stock is insufficient, the transaction fails and stock remains unchanged.
+If stock is insufficient for even one item, the entire completion request fails and stock remains unchanged — there is no partial stock movement.
+
+## Order State Rules
+
+This section explains the business rules behind purchase and sales order states, in plain terms.
+
+### Purchase Orders
+
+- A new purchase order is always created with status `pending`.
+- Only a `pending` purchase order can be completed.
+- Completing a purchase order increases stock for every item on the order.
+  - Example: current stock of Product A is 20, and the purchase order has Product A × 10. After completion, stock becomes 30.
+- A purchase order that is already `completed` cannot be completed again.
+
+### Sales Orders
+
+- A new sales order is always created with status `pending`.
+- A `pending` sales order can be updated (customer name, items, quantities, prices).
+- Completing a sales order decreases stock for every item on the order.
+  - Example: current stock of Product A is 20, and the sales order has Product A × 5. After completion, stock becomes 15.
+- A `completed` sales order cannot be updated.
+- A `completed` sales order cannot be completed again.
+- If the requested quantity is more than the available stock, completion is rejected and stock is not touched.
+  - Example: current stock is 5 and the order asks for 10 — the API rejects this rather than letting stock go negative.
+- Stock is never allowed to go below zero, under any circumstance.
+
+## Additional API Endpoints
+
+Beyond the operations explicitly listed in the assignment brief, this implementation includes a few practical REST endpoints that make the API easier and more complete to use in practice:
+
+- **`GET /api/suppliers/{supplier}`** — fetch a single supplier's details, matching the pattern already used for Categories and Products.
+- **`GET /api/purchase-orders`** and **`GET /api/purchase-orders/{purchaseOrder}`** — list and view purchase orders, needed to actually check order status before/after completion.
+- **`GET /api/sales-orders`** and **`GET /api/sales-orders/{salesOrder}`** — list and view sales orders, for the same reason.
+- **`PUT /api/sales-orders/{salesOrder}`** — allows a pending sales order to be corrected (say, if the customer changes the quantity) before it is completed.
+
+These endpoints do not change any of the required business rules — they only make it possible to view and manage the resources the assignment already asks for.
 
 # Common HTTP Responses
 
@@ -503,9 +580,9 @@ If stock is insufficient, the transaction fails and stock remains unchanged.
 | 200 | Successful request |
 | 201 | Resource created |
 | 401 | Authentication required/invalid |
-| 403 | Authenticated but not allowed |
+| 403 | Authenticated but not allowed to perform this action |
 | 404 | Resource not found |
-| 409 | Invalid order state/business conflict |
+| 409 | Business conflict — either an invalid order state (e.g. completing an already-completed order) or a delete blocked by dependent records |
 | 422 | Validation or business-rule error |
 
 Example forbidden response:
@@ -523,6 +600,24 @@ Example not-found response:
     "message": "Resource not found."
 }
 ```
+
+## Resource Deletion and Referential Integrity
+
+Categories, Suppliers and Products that already have dependent records (for example, a category that has products under it, or a supplier that has purchase order history) cannot be deleted.
+
+In this case, the API returns `409 Conflict`:
+
+```json
+{
+    "message": "Resource cannot be deleted because it is associated with existing records."
+}
+```
+
+This is intentional, and is a good thing rather than a limitation. It shows that:
+
+- Foreign key relationships are respected.
+- Deletion is safe — you cannot accidentally break historical stock, purchase or sales data by deleting a category or supplier that is still in use.
+- Past inventory and order records stay intact and trustworthy.
 
 # Validation
 
@@ -544,21 +639,17 @@ Examples include:
 
 ## Stock
 
-Stock is stored as an unsigned integer.
+Stock is stored as an unsigned integer, so it can never be a negative number at the database level.
 
-Stock-changing operations use database transactions and row locking to protect stock from invalid concurrent updates.
+Stock-changing operations use database transactions and row locking to protect stock from invalid concurrent updates — for example, two sales completing for the same product at the same time.
 
 ## Purchase
 
-Completing a purchase increases stock and creates an `IN` stock history record.
-
-A completed purchase cannot be completed again.
+Completing a purchase increases stock and creates an `IN` stock history record. A completed purchase cannot be completed again.
 
 ## Sales
 
-Before completing a sale, the system checks the required quantity against available stock.
-
-If stock is insufficient:
+Before completing a sale, the system checks the required quantity against available stock. If stock is insufficient:
 
 - The order is not completed.
 - Stock is not reduced.
@@ -566,26 +657,18 @@ If stock is insufficient:
 
 ## Audit History
 
-Stock movements record:
-
-- Product
-- Quantity
-- Type (`IN` / `OUT`)
-- Remarks
-- User who performed the operation
+Every stock movement records the product, the quantity moved, the type (`IN` or `OUT`), any remarks, and the user (`created_by`) who performed the operation — giving a complete, traceable history of every stock change.
 
 # Query Optimization
 
 The API uses:
 
-- Eager loading for relationships
-- Database-level filtering
-- Pagination
-- Database indexes
-- Allowlisted sorting
-- `whereColumn()` for low-stock filtering
-
-This helps reduce unnecessary queries and avoids common N+1 query problems.
+- Eager loading for relationships, to avoid N+1 query problems
+- Database-level filtering, instead of filtering in PHP after fetching everything
+- Pagination on all listing endpoints
+- Database indexes on frequently filtered/sorted columns
+- Allowlisted sorting, so `sort_by` can only use approved column names
+- `whereColumn()` for low-stock filtering, comparing `stock_quantity` against `minimum_stock` directly in the database
 
 # Database Relationships
 
@@ -649,23 +732,27 @@ Folders:
 07. Sales Orders
 ```
 
-Set the collection variable:
+## Postman Usage
 
-```text
-base_url = http://127.0.0.1:8000
-```
+1. Import `inventory_management_postman_collection.json` into Postman.
+2. Set the collection variable `base_url` to your local server, for example:
+   ```text
+   base_url = http://127.0.0.1:8000
+   ```
+3. Run the **Login** request with the Admin demo credentials.
+4. The collection automatically saves the returned Sanctum token into the `token` collection variable — there is no need to copy-paste the token manually.
+5. All protected requests automatically send:
+   ```text
+   Authorization: Bearer {{token}}
+   ```
+6. "Create" requests also automatically save the newly created resource's ID into the matching collection variable, for example:
+   - `category_id`
+   - `supplier_id`
+   - `product_id`
+   - `purchase_order_id`
+   - `sales_order_id`
 
-After login, set:
-
-```text
-token = <sanctum-token>
-```
-
-Protected requests use:
-
-```text
-Authorization: Bearer {{token}}
-```
+In short: just run Login once, and then the rest of the collection can be run in order without any manual setup.
 
 # Recommended Demo Flow
 
